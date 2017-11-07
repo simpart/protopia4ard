@@ -4,11 +4,16 @@
  * @author simpart
  */
 #include "pia/com.h"
+#include "pia/ip.h"
 
 #ifndef __ICMP_H__
 #define __ICMP_H__
 
 /*** define ***/
+#define PIA_ICMP_MAXDAT 64
+#define PIA_ICMP_DATDEFSIZ 56 // 32
+#define PIA_ICMP_ECHREQ_DEFSIZE sizeof(pia_icmphdr_t) + sizeof(pia_icmpecho_t) + g_pia_icmpdat.size
+
 /**
  * icmp type defined
  */
@@ -53,23 +58,49 @@
 #define PIA_ICMP_TMEX_FGR 0x1 //! fragment reassembly time exceeded
 
 /*** struct ***/
-typedef struct pia_icmphdr_com {
+typedef struct pia_icmphdr {
     uint8_t  type;
     uint8_t  code;
     uint16_t chksum;
-} pia_icmphdr_com_t;
+} pia_icmphdr_t;
 
-typedef struct pia_icmphdr_echo {
+typedef struct pia_icmpecho {
     uint16_t id;
     uint16_t seq;
-    uint16_t chksum;
-} pia_icmphdr_echo_t;
+} pia_icmpecho_t;
+
+typedef struct pia_icmpdat {
+    uint8_t data[PIA_ICMP_MAXDAT];
+    uint8_t size;
+} pia_icmpdat_t;
 
 /*** prototype ***/
-size_t pia_icmp_getecho  (uint8_t *, size_t, int);
-int    pia_icmp_getdata  (uint8_t *, size_t);
-int    pia_icmp_getseq   (void);
-void   pia_icmp_resetseq (void);
-
+/* init */
+int pia_icmp_init(void);
+/* dump */
+uint8_t pia_icmp_dump (pia_icmphdr_t *);
+uint8_t pia_icmp_dump_detail (pia_ipv4hdr_t *);
+char * pia_icmp_gettype_str (pia_icmphdr_t *);
+char * pia_icmp_getcode_str (pia_icmphdr_t *);
+uint8_t pia_icmp_dump_type (pia_icmphdr_t *);
+uint8_t pia_icmp_dump_id(pia_icmphdr_t *);
+uint8_t pia_icmp_dump_seq(pia_icmphdr_t *);
+uint8_t pia_icmp_dump_dat(pia_icmphdr_t *, size_t);
+/* classifier */
+uint8_t pia_icmp_isecho (pia_icmphdr_t *);
+uint8_t pia_icmp_isrequest (pia_icmphdr_t *);
+uint8_t pia_icmp_isreply (pia_icmphdr_t *);
+uint8_t pia_icmp_istype (pia_icmphdr_t *, uint8_t);
+/* message */
+int pia_icmp_setdef_type (uint8_t);
+int pia_icmp_setdef_code (uint8_t); 
+void pia_icmp_incdef_seq (void);
+int pia_icmp_getfrm (uint8_t *, size_t);
+int pia_icmp_getpkt (uint8_t *, size_t);
+int pia_icmp_getmsg (pia_icmphdr_t *, size_t);
+uint16_t pia_icmp_getid (pia_icmpecho_t *);
+uint16_t pia_icmp_getseq (pia_icmpecho_t *);
+uint8_t * pia_icmp_seekecho (pia_icmphdr_t *);
+uint8_t * pia_icmp_seekecho_dat (pia_icmpecho_t *);
 #endif
 /* end of file */
